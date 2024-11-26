@@ -1,0 +1,14 @@
+version: '3.5'
+services:
+  app:
+    build: ./
+    restart: on-failure
+    container_name: tx-parser
+    ports:
+     - "5000:5000"
+    environment:
+      SERVER_PORT: ':5000'
+      LOG_LEVEL: 'DEBUG'
+      PARSER_ENGINE: memorydb # for production use leveldb
+      ENV: 'dev'
+  
