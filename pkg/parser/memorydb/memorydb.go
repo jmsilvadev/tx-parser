@@ -1,6 +1,7 @@
 package memorydb
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -31,13 +32,13 @@ func New(cli jsonrpc.JsonRpcClient, l logger.Logger) *DB {
 	}
 }
 
-func (p *DB) GetCurrentBlock() int {
+func (p *DB) GetCurrentBlock(ctx context.Context) int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.currentBlock
 }
 
-func (p *DB) Subscribe(address string) bool {
+func (p *DB) Subscribe(ctx context.Context, address string) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -51,15 +52,15 @@ func (p *DB) Subscribe(address string) bool {
 	return true
 }
 
-func (p *DB) GetTransactions(address string) []parser.Transaction {
+func (p *DB) GetTransactions(ctx context.Context, address string) []parser.Transaction {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.transactions[strings.ToLower(address)]
 }
 
-func (p *DB) UpdateBlockNumber() {
+func (p *DB) UpdateBlockNumber(ctx context.Context) {
 	for {
-		blockNumber, err := p.jsonrpc.GetCurrentBlockNumber()
+		blockNumber, err := p.jsonrpc.GetCurrentBlockNumber(ctx)
 		if err != nil {
 			p.logger.Error(err.Error())
 			continue
@@ -68,7 +69,7 @@ func (p *DB) UpdateBlockNumber() {
 		p.mu.Lock()
 		if blockNumber > p.currentBlock {
 			p.currentBlock = blockNumber
-			transactions, err := p.jsonrpc.GetBlockTransactions(blockNumber)
+			transactions, err := p.jsonrpc.GetBlockTransactions(ctx, blockNumber)
 			if err == nil {
 				for _, tx := range transactions {
 					if p.subscriptions[strings.ToLower(tx.From)] || p.subscriptions[strings.ToLower(tx.To)] {

@@ -1,6 +1,7 @@
 package memorydb
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func TestUpdateBlockNumber(t *testing.T) {
 	db := New(cli, l)
 
 	// To cover lines
-	go db.UpdateBlockNumber()
+	go db.UpdateBlockNumber(context.Background())
 	time.Sleep(time.Second)
 }
 
@@ -28,14 +29,14 @@ func TestGetCurrentBlock(t *testing.T) {
 	cli := jsonrpc.NewEthereum(l, cliUrl)
 	db := New(cli, l)
 
-	block := db.GetCurrentBlock()
+	block := db.GetCurrentBlock(context.Background())
 	assert.Equal(t, 0, block)
 
 	db.mu.Lock()
 	db.currentBlock = 123
 	db.mu.Unlock()
 
-	block = db.GetCurrentBlock()
+	block = db.GetCurrentBlock(context.Background())
 	assert.Equal(t, 123, block)
 }
 
@@ -44,10 +45,10 @@ func TestSubscribe(t *testing.T) {
 	cli := jsonrpc.NewEthereum(l, cliUrl)
 	db := New(cli, l)
 
-	subscribed := db.Subscribe("0x123")
+	subscribed := db.Subscribe(context.Background(), "0x123")
 	assert.True(t, subscribed)
 
-	subscribed = db.Subscribe("0x123")
+	subscribed = db.Subscribe(context.Background(), "0x123")
 	assert.False(t, subscribed)
 }
 
@@ -56,7 +57,7 @@ func TestGetTransactions(t *testing.T) {
 	cli := jsonrpc.NewEthereum(l, cliUrl)
 	db := New(cli, l)
 
-	txs := db.GetTransactions("0x123")
+	txs := db.GetTransactions(context.Background(), "0x123")
 	assert.Empty(t, txs)
 
 	tx := parser.Transaction{
@@ -71,7 +72,7 @@ func TestGetTransactions(t *testing.T) {
 	db.transactions["0x123"] = append(db.transactions["0x123"], tx)
 	db.mu.Unlock()
 
-	txs = db.GetTransactions("0x123")
+	txs = db.GetTransactions(context.Background(), "0x123")
 	assert.Len(t, txs, 1)
 	assert.Equal(t, tx, txs[0])
 }

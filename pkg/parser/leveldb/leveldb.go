@@ -1,6 +1,7 @@
 package leveldb
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -35,7 +36,7 @@ func New(path string, cli jsonrpc.JsonRpcClient, l logger.Logger) (*DB, error) {
 	}, nil
 }
 
-func (p *DB) GetCurrentBlock() int {
+func (p *DB) GetCurrentBlock(ctx context.Context) int {
 	data, err := p.db.Get([]byte("currentBlock"), nil)
 	if err != nil {
 		p.logger.Debug(err.Error())
@@ -52,7 +53,7 @@ func (p *DB) GetCurrentBlock() int {
 	return block
 }
 
-func (p *DB) SetCurrentBlock(block int) error {
+func (p *DB) SetCurrentBlock(ctx context.Context, block int) error {
 	data, err := json.Marshal(block)
 	if err != nil {
 		p.logger.Debug(err.Error())
@@ -65,7 +66,7 @@ func (p *DB) SetCurrentBlock(block int) error {
 	return err
 }
 
-func (p *DB) Subscribe(address string) bool {
+func (p *DB) Subscribe(ctx context.Context, address string) bool {
 	_, err := p.db.Get([]byte("subscribed:"+strings.ToLower(address)), nil)
 	if err == nil {
 		return false
@@ -82,7 +83,7 @@ func (p *DB) Subscribe(address string) bool {
 	return err == nil
 }
 
-func (p *DB) GetTransactions(address string) []parser.Transaction {
+func (p *DB) GetTransactions(ctx context.Context, address string) []parser.Transaction {
 	data, err := p.db.Get([]byte("transactions:"+strings.ToLower(address)), nil)
 	if err != nil {
 		if err == leveldb.ErrNotFound {
@@ -99,8 +100,8 @@ func (p *DB) GetTransactions(address string) []parser.Transaction {
 	return transactions
 }
 
-func (p *DB) AddTransaction(address string, tx parser.Transaction) error {
-	transactions := p.GetTransactions(strings.ToLower(address))
+func (p *DB) AddTransaction(ctx context.Context, address string, tx parser.Transaction) error {
+	transactions := p.GetTransactions(ctx, strings.ToLower(address))
 	if len(transactions) == 0 {
 		transactions = []parser.Transaction{}
 	}
@@ -119,30 +120,30 @@ func (p *DB) AddTransaction(address string, tx parser.Transaction) error {
 	return err
 }
 
-func (p *DB) UpdateBlockNumber() {
+func (p *DB) UpdateBlockNumber(ctx context.Context) {
 	for {
-		blockNumber, err := p.jsonrpc.GetCurrentBlockNumber()
+		blockNumber, err := p.jsonrpc.GetCurrentBlockNumber(ctx)
 		if err != nil {
 			p.logger.Debug(err.Error())
 			continue
 		}
 
-		currentBlock := p.GetCurrentBlock()
+		currentBlock := p.GetCurrentBlock(ctx)
 		if blockNumber > currentBlock {
-			err = p.SetCurrentBlock(blockNumber)
+			err = p.SetCurrentBlock(ctx, blockNumber)
 			if err != nil {
 				p.logger.Debug(err.Error())
 				continue
 			}
-			transactions, err := p.jsonrpc.GetBlockTransactions(blockNumber)
+			transactions, err := p.jsonrpc.GetBlockTransactions(ctx, blockNumber)
 			if err == nil {
 				for _, tx := range transactions {
 					subscribedFrom, _ := p.db.Get([]byte("subscribed:"+strings.ToLower(tx.From)), nil)
 					subscribedTo, _ := p.db.Get([]byte("subscribed:"+strings.ToLower(tx.To)), nil)
 					if subscribedFrom != nil || subscribedTo != nil {
 						p.logger.Debug(fmt.Sprintf("AddTransaction address %s %s ", tx.From, tx.To))
-						p.AddTransaction(strings.ToLower(tx.From), tx)
-						p.AddTransaction(strings.ToLower(tx.To), tx)
+						p.AddTransaction(ctx, strings.ToLower(tx.From), tx)
+						p.AddTransaction(ctx, strings.ToLower(tx.To), tx)
 					}
 				}
 			} else {

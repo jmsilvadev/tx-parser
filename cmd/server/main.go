@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	server "github.com/jmsilvadev/tx-parser/internal/server"
 	"github.com/jmsilvadev/tx-parser/pkg/config"
 )
@@ -20,7 +22,7 @@ func run(conf *config.Config) error {
 
 	s := server.NewServer(serverOptions...)
 
-	s.Start()
+	s.Start(context.Background())
 
 	return nil
 }

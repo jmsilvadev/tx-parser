@@ -36,8 +36,8 @@ func NewServer(options ...ServerOption) *Server {
 	return svr
 }
 
-func (s *Server) Start() {
-	go s.parser.UpdateBlockNumber()
+func (s *Server) Start(ctx context.Context) {
+	go s.parser.UpdateBlockNumber(ctx)
 	h := handlers.New(s.parser)
 
 	http.HandleFunc("/health", h.HealthHandler)
@@ -58,7 +58,7 @@ func (s *Server) Start() {
 	go func() {
 		s.logger.Warn(fmt.Sprint("received a shutdown signal:", <-listener))
 		s.logger.Warn("shutdown the server...")
-		server.Shutdown(context.Background())
+		server.Shutdown(ctx)
 		wg.Done()
 	}()
 
