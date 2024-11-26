@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -63,8 +64,9 @@ func (s *Server) Start() {
 
 	s.logger.Info("server listening at " + s.port)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		s.logger.Error("failed to serve: " + err.Error())
+		log.Fatal("failed to serve: " + err.Error())
 	}
+
 	wg.Wait()
 	s.logger.Warn("server gracefully stopped")
 }

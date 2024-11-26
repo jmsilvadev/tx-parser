@@ -41,7 +41,7 @@ go mod tidy
 To start the server, run the following command:
 
 ```sh
-go run cmd/main.go
+go run cmd/server/main.go
 ```
 
 ### Docker
