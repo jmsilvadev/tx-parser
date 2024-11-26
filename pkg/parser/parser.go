@@ -1,14 +1,16 @@
 package parser
 
+import "context"
+
 type Parser interface {
 	// last parsed block
-	GetCurrentBlock() int
+	GetCurrentBlock(context.Context) int
 	// add address to observer
-	Subscribe(address string) bool
+	Subscribe(context.Context, string) bool
 	// list of inbound or outbound transactions for an address
-	GetTransactions(address string) []Transaction
+	GetTransactions(context.Context, string) []Transaction
 	// routine to fetch the transactions each 12 seconds
-	UpdateBlockNumber()
+	UpdateBlockNumber(context.Context)
 }
 
 type Transaction struct {

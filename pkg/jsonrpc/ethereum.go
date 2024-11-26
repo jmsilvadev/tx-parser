@@ -1,6 +1,7 @@
 package jsonrpc
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,7 +26,7 @@ func NewEthereum(l logger.Logger, cliUrl string) *Ethereum {
 	}
 }
 
-func (e *Ethereum) GetCurrentBlockNumber() (int, error) {
+func (e *Ethereum) GetCurrentBlockNumber(ctx context.Context) (int, error) {
 	e.log.Debug("Executing GetCurrentBlockNumber")
 	payload := `{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}`
 
@@ -52,7 +53,7 @@ func (e *Ethereum) GetCurrentBlockNumber() (int, error) {
 	return int(blockNumber), nil
 }
 
-func (e *Ethereum) GetBlockTransactions(blockNumber int) ([]parser.Transaction, error) {
+func (e *Ethereum) GetBlockTransactions(ctx context.Context, blockNumber int) ([]parser.Transaction, error) {
 	e.log.Debug(fmt.Sprintf("Executing GetBlockTransactions. Block: %v", blockNumber))
 
 	payload := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x%x", true],"id":1}`, blockNumber)

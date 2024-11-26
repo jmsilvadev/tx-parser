@@ -38,7 +38,7 @@ func (h *handler) GetCurrentBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	block := h.parser.GetCurrentBlock()
+	block := h.parser.GetCurrentBlock(r.Context())
 	response := Response{
 		Status: "success",
 		Data:   map[string]int{"currentBlock": block},
@@ -70,7 +70,7 @@ func (h *handler) Subscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := h.parser.Subscribe(reqBody.Address)
+	success := h.parser.Subscribe(r.Context(), reqBody.Address)
 	response := Response{
 		Status: "success",
 		Data:   map[string]bool{"subscribed": success},
@@ -79,8 +79,11 @@ func (h *handler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	if !success {
 		response.Status = "error"
 		response.Message = "Address already subscribed or invalid"
+		writeJSONResponse(w, http.StatusBadRequest, response)
+	} else {
+		writeJSONResponse(w, http.StatusOK, response)
 	}
-	writeJSONResponse(w, http.StatusBadRequest, response)
+
 }
 
 func (h *handler) GetTransactions(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +106,7 @@ func (h *handler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transactions := h.parser.GetTransactions(address)
+	transactions := h.parser.GetTransactions(r.Context(), address)
 	if transactions == nil {
 		transactions = []parser.Transaction{}
 	}

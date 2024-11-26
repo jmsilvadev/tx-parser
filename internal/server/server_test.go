@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,15 +16,15 @@ import (
 
 type MockParser struct{}
 
-func (m *MockParser) GetCurrentBlock() int {
+func (m *MockParser) GetCurrentBlock(ctx context.Context) int {
 	return 123
 }
 
-func (m *MockParser) Subscribe(address string) bool {
+func (m *MockParser) Subscribe(ctx context.Context, address string) bool {
 	return true
 }
 
-func (m *MockParser) GetTransactions(address string) []parser.Transaction {
+func (m *MockParser) GetTransactions(ctx context.Context, address string) []parser.Transaction {
 	return []parser.Transaction{
 		{
 			Hash:        "0xabc",
@@ -35,7 +36,7 @@ func (m *MockParser) GetTransactions(address string) []parser.Transaction {
 	}
 }
 
-func (m *MockParser) UpdateBlockNumber() {}
+func (m *MockParser) UpdateBlockNumber(ctx context.Context) {}
 
 func TestServer(t *testing.T) {
 	mockParser := &MockParser{}
@@ -50,7 +51,7 @@ func TestServer(t *testing.T) {
 		},
 	)
 
-	go s.Start()
+	go s.Start(context.Background())
 	time.Sleep(1 * time.Second)
 
 	t.Run("HealthHandler", func(t *testing.T) {

@@ -1,8 +1,12 @@
 package jsonrpc
 
-import "github.com/jmsilvadev/tx-parser/pkg/parser"
+import (
+	"context"
+
+	"github.com/jmsilvadev/tx-parser/pkg/parser"
+)
 
 type JsonRpcClient interface {
-	GetCurrentBlockNumber() (int, error)
-	GetBlockTransactions(blockNumber int) ([]parser.Transaction, error)
+	GetCurrentBlockNumber(context.Context) (int, error)
+	GetBlockTransactions(context.Context, int) ([]parser.Transaction, error)
 }

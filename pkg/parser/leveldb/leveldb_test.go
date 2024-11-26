@@ -1,6 +1,7 @@
 package leveldb
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -35,7 +36,7 @@ func TestUpdateBlockNumber(t *testing.T) {
 	defer teardownTestDB(db)
 
 	// To cover lines
-	go db.UpdateBlockNumber()
+	go db.UpdateBlockNumber(context.Background())
 	time.Sleep(time.Second)
 }
 
@@ -44,10 +45,10 @@ func TestGetSetCurrentBlock(t *testing.T) {
 	defer teardownTestDB(db)
 
 	// Test setting and getting the current block
-	err := db.SetCurrentBlock(123)
+	err := db.SetCurrentBlock(context.Background(), 123)
 	assert.NoError(t, err)
 
-	block := db.GetCurrentBlock()
+	block := db.GetCurrentBlock(context.Background())
 	assert.Equal(t, 123, block)
 }
 
@@ -56,11 +57,11 @@ func TestSubscribe(t *testing.T) {
 	defer teardownTestDB(db)
 
 	// Test subscribing an address
-	subscribed := db.Subscribe("0x123")
+	subscribed := db.Subscribe(context.Background(), "0x123")
 	assert.True(t, subscribed)
 
 	// Test subscribing the same address again
-	subscribed = db.Subscribe("0x123")
+	subscribed = db.Subscribe(context.Background(), "0x123")
 	assert.False(t, subscribed)
 }
 
@@ -69,7 +70,7 @@ func TestGetAddTransactions(t *testing.T) {
 	defer teardownTestDB(db)
 
 	// Test getting transactions for an address with no transactions
-	txs := db.GetTransactions("0x123")
+	txs := db.GetTransactions(context.Background(), "0x123")
 	assert.Empty(t, txs)
 
 	// Test adding a transaction
@@ -80,11 +81,11 @@ func TestGetAddTransactions(t *testing.T) {
 		Value:       "100",
 		BlockNumber: 1,
 	}
-	err := db.AddTransaction("0x123", tx)
+	err := db.AddTransaction(context.Background(), "0x123", tx)
 	assert.NoError(t, err)
 
 	// Test getting transactions for the address
-	txs = db.GetTransactions("0x123")
+	txs = db.GetTransactions(context.Background(), "0x123")
 	assert.Len(t, txs, 1)
 	assert.Equal(t, tx, txs[0])
 }
