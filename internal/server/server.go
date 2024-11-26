@@ -43,6 +43,7 @@ func (s *Server) Start() {
 	http.HandleFunc("/v1/get-current-block", h.GetCurrentBlock)
 	http.HandleFunc("/v1/subscribe", h.Subscribe)
 	http.HandleFunc("/v1/get-transactions", h.GetTransactions)
+	http.HandleFunc("/", handlers.NotFoundHandler)
 
 	server := &http.Server{
 		Addr: s.port,

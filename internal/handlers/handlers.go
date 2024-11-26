@@ -29,6 +29,15 @@ func (h *handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetCurrentBlock(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		response := Response{
+			Status:  "error",
+			Message: "method not allowed",
+		}
+		writeJSONResponse(w, http.StatusMethodNotAllowed, response)
+		return
+	}
+
 	block := h.parser.GetCurrentBlock()
 	response := Response{
 		Status: "success",
@@ -38,8 +47,21 @@ func (h *handler) GetCurrentBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) Subscribe(w http.ResponseWriter, r *http.Request) {
-	address := r.URL.Query().Get("address")
-	if address == "" {
+	if r.Method != http.MethodPost {
+		response := Response{
+			Status:  "error",
+			Message: "method not allowed",
+		}
+		writeJSONResponse(w, http.StatusMethodNotAllowed, response)
+		return
+	}
+
+	var reqBody struct {
+		Address string `json:"address"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil || reqBody.Address == "" {
 		response := Response{
 			Status:  "error",
 			Message: "address is required",
@@ -48,19 +70,29 @@ func (h *handler) Subscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := h.parser.Subscribe(address)
+	success := h.parser.Subscribe(reqBody.Address)
 	response := Response{
-		Status: "error",
+		Status: "success",
 		Data:   map[string]bool{"subscribed": success},
 	}
 
 	if !success {
+		response.Status = "error"
 		response.Message = "Address already subscribed or invalid"
 	}
 	writeJSONResponse(w, http.StatusBadRequest, response)
 }
 
 func (h *handler) GetTransactions(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		response := Response{
+			Status:  "error",
+			Message: "method not allowed",
+		}
+		writeJSONResponse(w, http.StatusMethodNotAllowed, response)
+		return
+	}
+
 	address := r.URL.Query().Get("address")
 	if address == "" {
 		response := Response{
@@ -81,6 +113,14 @@ func (h *handler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 		Data:   transactions,
 	}
 	writeJSONResponse(w, http.StatusOK, response)
+}
+
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	response := Response{
+		Status:  "error",
+		Message: "route not found",
+	}
+	writeJSONResponse(w, http.StatusNotFound, response)
 }
 
 func writeJSONResponse(w http.ResponseWriter, statusCode int, response Response) {
